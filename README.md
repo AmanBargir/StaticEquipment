@@ -32,8 +32,4 @@ Contribute to the repository by sharing your knowledge, code snippets, or projec
 2. Share insights, ask questions, and collaborate.
 3. Follow best practices and adhere to industry standards.
 
-## License
-
-This repository is licensed under the [MIT License](LICENSE).
-
 Thank you for being part of the Static Equipment Design community. Let's build safer and more efficient designs together!
