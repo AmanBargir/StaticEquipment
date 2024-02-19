@@ -15,7 +15,7 @@ Welcome to the Static Equipment Design Repository! This repository is a comprehe
 
 1. Clone the repository to your local machine.
    ```bash
-   git clone https://github.com/your-username/static-equipment-design.git
+   git clone [https://github.com/your-username/static-equipment-design.git](https://amanbargir.github.io/StaticEquipment/)
    ```
 
 2. Explore the folders for guidelines, code examples, calculators, case studies, and templates.
