@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASME Section VIII Div. 1 UG-27 Thickness Calculator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+
+        h1, h2 {
+            color: #f4f4f4;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #detailedSteps, #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        #printButton {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>ASME Section VIII Div. 1 UG-27 Thickness Calculator</h1>
+</header>
+
+<form id="thicknessCalculator">
+    <label for="shellType">Select Shell Type:</label>
+    <select id="shellType" onchange="changeShellType()">
+        <option value="cylindrical">Cylindrical Shell</option>
+        <option value="spherical">Spherical Shell</option>
+    </select>
+
+    <label for="internalPressure">Design Internal Pressure (P) [MPa]:</label>
+    <input type="number" id="internalPressure" step="0.1" required>
+
+    <label for="depth">Depth (h) [m]:</label>
+    <input type="number" id="depth" step="0.1" required onchange="calculateStaticHead()">
+
+    <label for="fluidDensity">Density of Fluid (ρ) [kg/m³]:</label>
+    <input type="number" id="fluidDensity" step="1" required onchange="calculateStaticHead()">
+
+    <label for="staticHead">Static Head (S.H.) [MPa]:</label>
+    <input type="number" id="staticHead" step="0.001" onchange="disableAutoCalculation()">
+
+    <label for="radius">Radius (R) [mm]:</label>
+    <input type="number" id="radius" step="1" required>
+
+    <label for="jointEfficiency">Joint Efficiency (E):</label>
+    <input type="number" id="jointEfficiency" step="0.01" min="0" max="1" value="1" required>
+
+    <label for="allowableStress">Allowable Stress (S) [MPa]:</label>
+    <input type="number" id="allowableStress" step="0.1" required>
+
+    <label for="corrosionAllowance">Corrosion Allowance (C) [mm]:</label>
+    <input type="number" id="corrosionAllowance" step="0.1" value="0">
+
+    <button type="button" onclick="calculateThickness()">Calculate Thickness</button>
+
+    <!-- Print Button -->
+    <button id="printButton" onclick="printDocument()">Print</button>
+
+    <!-- Detailed Steps Section -->
+    <div id="detailedSteps" style="display: none;">
+        <h2>Detailed Steps:</h2>
+        <p id="detailText"></p>
+    </div>
+
+    <!-- Result Section -->
+    <h2 id="result">Result:</h2>
+    <p id="resultText">Thickness will be displayed here after calculation.</p>
+</form>
+
+<script>
+    function changeShellType() {
+        // You can add additional logic here if needed
+    }
+
+    function calculateStaticHead() {
+        const depth = parseFloat(document.getElementById('depth').value);
+        const fluidDensity = parseFloat(document.getElementById('fluidDensity').value);
+        const staticHeadInput = document.getElementById('staticHead');
+        const calculatedStaticHead = fluidDensity * 9.81 * depth / 1e6; // Convert Pascal to MPa
+        staticHeadInput.value = calculatedStaticHead.toFixed(4);
+    }
+
+    function disableAutoCalculation() {
+        const depthInput = document.getElementById('depth');
+        const fluidDensityInput = document.getElementById('fluidDensity');
+        depthInput.removeAttribute('onchange');
+        fluidDensityInput.removeAttribute('onchange');
+    }
+
+    function calculateThickness() {
+        const shellType = document.getElementById('shellType').value;
+        const internalPressure = parseFloat(document.getElementById('internalPressure').value);
+        const depth = parseFloat(document.getElementById('depth').value);
+        const fluidDensity = parseFloat(document.getElementById('fluidDensity').value);
+        const staticHead = parseFloat(document.getElementById('staticHead').value);
+        const radius = parseFloat(document.getElementById('radius').value);
+        const jointEfficiency = parseFloat(document.getElementById('jointEfficiency').value);
+        const allowableStress = parseFloat(document.getElementById('allowableStress').value);
+        const corrosionAllowance = parseFloat(document.getElementById('corrosionAllowance').value);
+
+        // Add static head to design internal pressure
+        const totalPressure = internalPressure + staticHead;
+
+        let thickness;
+
+        let detailText = ""; // String to store detailed steps
+
+        // Detailed steps for Static Head Calculation
+        detailText += "Static Head Calculation:\n";
+        detailText += `S.H. = ρ × g × h\n`;
+        detailText += `    = ${fluidDensity} kg/m³ × 9.81 m/s² × ${depth} m\n`;
+        detailText += `    = ${staticHead.toFixed(4)} MPa\n\n`;
+
+        // Check conditions before proceeding with thickness calculation
+        if (shellType === 'cylindrical') {
+            if (totalPressure > 0.385 * allowableStress * jointEfficiency) {
+                document.getElementById('resultText').textContent = "Result: P is not less than 0.385 × S × E, check clause UG-27(c)(1).";
+                return;
+            }
+            if (totalPressure > 1.25 * allowableStress * jointEfficiency) {
+                document.getElementById('resultText').textContent = "Result: P is not less than 1.25 × S × E, check clause UG-27(c)(2).";
+                return;
+            }
+        } else if (shellType === 'spherical') {
+            if (totalPressure > 0.665 * allowableStress * jointEfficiency) {
+                document.getElementById('resultText').textContent = "Result: P is not less than 0.665 × S × E, check clause UG-27(d).";
+                return;
+            }
+        }
+
+        // Continue with thickness calculation
+        if (shellType === 'cylindrical') {
+            // Cylindrical Shell Thickness Calculation (Option 1: Circumferential Stress)
+            detailText += "Option 1 (Circumferential Stress) Thickness Calculation:\n";
+            detailText += `t1 = (P + S.H.) * R / ((S * E) - (0.6 * (P + S.H.)))\n`;
+
+            const numerator1 = totalPressure * radius;
+            const denominator1 = (allowableStress * jointEfficiency) - (0.6 * totalPressure);
+            const option1Thickness = numerator1 / denominator1;
+
+            detailText += `   = ${numerator1} / ${denominator1}\n`;
+            detailText += `   ≈ ${option1Thickness.toFixed(4)} mm\n`;
+
+            // Cylindrical Shell Thickness Calculation (Option 2: Longitudinal Stress)
+            detailText += "\nOption 2 (Longitudinal Stress) Thickness Calculation:\n";
+            detailText += `t2 = (P + S.H.) * R / ((2 * S * E) + (0.4 * (P + S.H.)))\n`;
+
+            const numerator2 = totalPressure * radius;
+            const denominator2 = (2 * allowableStress * jointEfficiency) + (0.4 * totalPressure);
+            const option2Thickness = numerator2 / denominator2;
+
+            detailText += `   = ${numerator2} / ${denominator2}\n`;
+            detailText += `   ≈ ${option2Thickness.toFixed(4)} mm\n`;
+
+            // Select the greater of the two options
+            thickness = Math.max(option1Thickness, option2Thickness);
+        } else if (shellType === 'spherical') {
+            // Spherical Shell Thickness Calculation
+            detailText += "Spherical Shell Thickness Calculation:\n";
+            detailText += `t = (P + S.H.) * R / ((2 * S * E) - (0.2 * (P + S.H.)))\n`;
+
+            const numerator3 = totalPressure * radius;
+            const denominator3 = (2 * allowableStress * jointEfficiency) - (0.2 * totalPressure);
+            thickness = numerator3 / denominator3;
+
+            detailText += `   = ${numerator3} / ${denominator3}\n`;
+            detailText += `   ≈ ${thickness.toFixed(4)} mm\n`;
+        }
+
+        // Add corrosion allowance
+        thickness += corrosionAllowance;
+
+        // Display detailed steps
+        document.getElementById('detailedSteps').style.display = 'block';
+        document.getElementById('detailText').textContent = detailText;
+
+        // Display the result
+        document.getElementById('resultText').textContent = `Required Thickness: ${thickness.toFixed(4)} mm`;
+
+        // Display the print button
+        document.getElementById('printButton').style.display = 'block';
+    }
+
+    function printDocument() {
+        window.print();
+    }
+</script>
+
+</body>
+</html>
