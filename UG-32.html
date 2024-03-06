@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASME Sec VIII Div 1 : UG-32 Thickness Calculator</title>
+    <style>
+        /* Styles unchanged from the original code */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+
+        h1, h2 {
+            color: #f4f4f4;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #detailedSteps, #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        #printButton {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>ASME Sec VIII Div 1 : UG-32 Thickness Calculator</h1>
+</header>
+
+<form id="thicknessCalculator">
+    <label for="headType">Select Head Type:</label>
+    <select id="headType" onchange="changeHeadType()">
+        <option value="ellipsoidal">2:1 Ellipsoidal Head</option>
+        <option value="hemispherical">Hemispherical Head</option>
+        <option value="torispherical">Torispherical Head</option>
+    </select>
+
+    <label for="designPressure">Design Pressure (P) [MPa]:</label>
+    <input type="number" id="designPressure" step="0.1" required>
+
+    <!-- Additional inputs for Ellipsoidal Head -->
+    <div id="ellipsoidalInputs" style="display: none;">
+        <label for="insideDiameter">Inside Corroded Diameter (D) [mm]:</label>
+        <input type="number" id="insideDiameter" step="1" required>
+    </div>
+
+    <!-- Additional inputs for Hemispherical Head -->
+    <div id="hemisphericalInputs" style="display: none;">
+        <label for="insideRadius">Inside Spherical or Crown Radius (L) [mm]:</label>
+        <input type="number" id="insideRadius" step="1" required>
+    </div>
+
+    <!-- Additional inputs for Torispherical Head -->
+    <div id="torisphericalInputs" style="display: none;">
+        <label for="insideRadiusTorispherical">Inside Spherical or Crown Radius (L) [mm]:</label>
+        <input type="number" id="insideRadiusTorispherical" step="1" required>
+    </div>
+
+    <label for="allowableStressHead">Allowable Stress (S) [MPa]:</label>
+    <input type="number" id="allowableStressHead" step="0.1" required>
+
+    <label for="jointEfficiencyHead">Joint Efficiency (E):</label>
+    <input type="number" id="jointEfficiencyHead" step="0.01" min="0" max="1" value="1" required>
+
+    <label for="corrosionAllowanceHead">Corrosion Allowance (C.A.) [mm]:</label>
+    <input type="number" id="corrosionAllowanceHead" step="0.1" value="0">
+
+    <button type="button" onclick="calculateHeadThickness()">Calculate Thickness</button>
+
+    <!-- Print Button -->
+    <button id="printButton" onclick="printDocument()">Print</button>
+
+    <!-- Detailed Steps Section -->
+    <div id="detailedSteps" style="display: none;">
+        <h2>Detailed Steps:</h2>
+        <p id="detailText"></p>
+    </div>
+
+    <!-- Result Section -->
+    <h2 id="result">Result:</h2>
+    <p id="resultText">Thickness will be displayed here after calculation.</p>
+</form>
+
+<script>
+    function changeHeadType() {
+        const headType = document.getElementById('headType').value;
+
+        // Hide all additional inputs
+        document.getElementById('ellipsoidalInputs').style.display = 'none';
+        document.getElementById('hemisphericalInputs').style.display = 'none';
+        document.getElementById('torisphericalInputs').style.display = 'none';
+
+        // Show additional inputs based on selected head type
+        if (headType === 'ellipsoidal') {
+            document.getElementById('ellipsoidalInputs').style.display = 'block';
+        } else if (headType === 'hemispherical') {
+            document.getElementById('hemisphericalInputs').style.display = 'block';
+        } else if (headType === 'torispherical') {
+            document.getElementById('torisphericalInputs').style.display = 'block';
+        }
+    }
+
+    function calculateHeadThickness() {
+        const headType = document.getElementById('headType').value;
+        const designPressure = parseFloat(document.getElementById('designPressure').value);
+        const allowableStress = parseFloat(document.getElementById('allowableStressHead').value);
+        const jointEfficiency = parseFloat(document.getElementById('jointEfficiencyHead').value);
+        const corrosionAllowance = parseFloat(document.getElementById('corrosionAllowanceHead').value);
+
+        let thickness;
+        let detailText = ""; // String to store detailed steps
+
+        if (headType === 'ellipsoidal') {
+            const insideDiameter = parseFloat(document.getElementById('insideDiameter').value);
+
+            // Ellipsoidal Head Thickness Calculation
+            detailText += "Ellipsoidal Head Thickness Calculation:\n";
+            detailText += `t = (P * D) / ((2 * S * E) - (0.2 * P))\n`;
+
+            const numerator = designPressure * insideDiameter;
+            const denominator = (2 * allowableStress * jointEfficiency) - (0.2 * designPressure);
+            thickness = numerator / denominator;
+
+            detailText += `   = ${numerator} / ${denominator}\n`;
+            detailText += `   ≈ ${thickness.toFixed(4)} mm\n`;
+
+        } else if (headType === 'hemispherical') {
+            const insideRadius = parseFloat(document.getElementById('insideRadius').value);
+
+            // Hemispherical Head Thickness Calculation
+            detailText += "Hemispherical Head Thickness Calculation:\n";
+            detailText += `t = (P * L) / ((2 * S * E) - (0.2 * P))\n`;
+
+            const numerator = designPressure * insideRadius;
+            const denominator = (2 * allowableStress * jointEfficiency) - (0.2 * designPressure);
+            thickness = numerator / denominator;
+
+            detailText += `   = ${numerator} / ${denominator}\n`;
+            detailText += `   ≈ ${thickness.toFixed(4)} mm\n`;
+
+        } else if (headType === 'torispherical') {
+            const insideRadiusTorispherical = parseFloat(document.getElementById('insideRadiusTorispherical').value);
+
+            // Torispherical Head Thickness Calculation
+            detailText += "Torispherical Head Thickness Calculation:\n";
+            detailText += `t = (0.885 * P * L) / ((S * E) - (0.1 * P))\n`;
+
+            const numerator = 0.885 * designPressure * insideRadiusTorispherical;
+            const denominator = (allowableStress * jointEfficiency) - (0.1 * designPressure);
+            thickness = numerator / denominator;
+
+            detailText += `   = ${numerator} / ${denominator}\n`;
+            detailText += `   ≈ ${thickness.toFixed(4)} mm\n`;
+        }
+
+        // Add corrosion allowance to the calculated thickness
+        const finalThickness = thickness + corrosionAllowance;
+
+        // Display detailed steps
+        document.getElementById('detailedSteps').style.display = 'block';
+        document.getElementById('detailText').textContent = detailText;
+
+        // Display the result
+        document.getElementById('resultText').textContent = `Required Thickness: ${finalThickness.toFixed(4)} mm`;
+
+        // Display the print button
+        document.getElementById('printButton').style.display = 'block';
+    }
+
+    function printDocument() {
+        window.print();
+    }
+</script>
+
+</body>
+</html>
